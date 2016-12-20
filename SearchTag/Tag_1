@@ -1,0 +1,184 @@
+#!/usr/bin/env python
+
+import sys
+import rospy
+import math
+from math import sqrt
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+
+from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+from geometry_msgs.msg import PoseArray # for receiving tag feedback
+from nav_msgs.msg import Odometry # for receiving odometry feedback
+
+
+
+
+
+# Global variables 
+z = 0.0 # altitude du drone en temps reel
+psi_deg = 0.0
+psi_deg_ref = 0.0
+altitudeRef = 1.2 # altitude de depart
+coeff_linear = 2 # coefficient de correction P
+coeff_angular = 0.8
+
+# distance entre drone et tag
+distance_x = 0.0
+distance_y = 0.0
+distance_z = 0.0
+theta_rad = 0.0
+flagtag = False
+
+command = Twist()
+
+# Node init
+rospy.init_node('cmd', anonymous=True)
+
+# Publisher declaration on the topic of command
+pubCommand = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+commandRate = rospy.Rate(40) 
+
+
+
+
+# Measurements reading
+def readZ(data):
+    global z
+    global psi_deg
+    # Data reading Z axis
+    z = data.altd / 1000.0
+    # Data reading yaw angle (deg)
+    psi_deg = data.rotZ 
+
+# tag reading
+def readTag(data):
+    global flagtag
+    try:
+        global distance_x
+        global distance_y
+        global distance_z
+        global theta_rad
+        flagtag = True
+        distance_x = data.poses[0].position.x
+        distance_y = data.poses[0].position.y
+        distance_z = data.poses[0].position.z
+        theta_rad = data.poses[0].orientation.z
+    
+    except:
+        flagtag = False
+
+rospy.Subscriber("/ardrone/navdata", Navdata, readZ)
+rospy.Subscriber("/tag_detections_pose", PoseArray, readTag)
+
+
+
+
+# Main: looping execution
+if __name__ == '__main__':
+    global z
+    global flagtag
+    
+    current_z = 1.4
+    
+    print 'begin stabilization (' + str(altitudeRef) + ')'
+    
+    # cherche le tag
+    tagFound = False
+    tab = []
+    tab.append(0)
+    tab.append(0)
+    dpla = 0.0
+    init_angle = -1000.0
+    
+    while(tagFound == False):
+        if(flagtag == True):
+            tagFound = True
+            break
+        
+        if init_angle == -1000.0:
+            init_angle = psi_deg
+        
+        if(math.fabs(dpla) > init_angle + 360):
+             command.angular.z = 0.0
+             command.linear.z = 0.0
+             pubCommand.publish(command)
+             commandRate.sleep()
+             sys.exit()
+        
+        tab[1] = psi_deg
+        if math.fabs(tab[1] - tab[0]) < 350:
+            dpla += tab[1]-tab[0]
+        else:
+            dpla += (180-math.fabs(tab[0])) + (180-math.fabs(tab[1]))
+        tab[0] = tab[1]
+        if psi_deg < 0.0:
+            psi_deg += 360
+
+        command.angular.z = coeff_angular*0.03*(30)
+        
+        if math.fabs(psi_deg - psi_deg_ref) < 15:
+            psi_deg_ref += 15
+        
+        pubCommand.publish(command)
+        commandRate.sleep()
+    
+    
+    #print 'begin main code : look for the tag'
+    
+    command.linear.z = 0.0
+    command.angular.z = 0.0
+    
+    while not rospy.is_shutdown():
+        if flagtag == True:
+           
+           # profondeur
+           if(distance_z > 1.1):
+               command.linear.x = coeff_linear*(distance_z) * 0.04
+               #print "j'avance en XXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           if(distance_z < 0.9):
+               command.linear.x = -coeff_linear*((2/(distance_z))) * 0.04
+               #print "je recule XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           if(distance_z > 0.9 and distance_z < 1.1):
+               command.linear.x = 0.0
+               #print "je suis bon en XXXXXXXXXXXXXXXXXXXXXXXXXX"
+           
+           # monte / descend
+           if(distance_y >= 0.05):
+               command.linear.z = -coeff_linear*(distance_y) 
+               #print "j'avance en ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+           if(distance_y <=-0.05):
+               command.linear.z = -coeff_linear*((distance_y)) 
+               #print "je recule ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+           if(distance_y <0.05 and distance_y > -0.05):
+               command.linear.z = 0.0
+               #print "je suis bon en ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+
+           # gauche / droite
+           if(distance_x > 0.2):
+                #print"je me replace en YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+                #command.linear.y = -(coeff_linear*(distance_x) * 0.015 * (math.fabs(distance_z)+1))
+                command.angular.z = coeff_angular*0.8*(-9)
+           if(distance_x <= -0.2):
+                #print"je me replace en YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+                #command.linear.y = -coeff_linear*((distance_x) * 0.015 * (math.fabs(distance_z)+1))*
+                command.angular.z = coeff_angular*0.8*(9)
+           if(distance_x >= -0.2 and distance_x <= 0.2):
+                #print "je suis bon en YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+                #command.linear.y = 0.0
+            
+            #print 'Detect tag, coef Z: ', command.linear.z
+            #print 'Detect tag, coef X: ', command.linear.x
+            print str(distance_x) + ' ' + str(distance_y) + ' ' + str(distance_z)
+        else:
+            command.linear.x = 0.0
+            command.linear.y = 0.0
+            command.linear.z = 0.0
+            command.angular.z = 0.0
+            #print 'No tag'
+            print '-1 -1 -1'
+
+        pubCommand.publish(command)
+        commandRate.sleep()
+
+
