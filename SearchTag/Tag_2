@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+
+import rospy
+import math
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+from nav_msgs.msg import Odometry # for receiving odometry feedback
+import sys
+
+# Global variables 
+z = 0.0
+z_ref_min = 1.4 # mm
+z_ref_max = 2.0 # mm
+psi_deg = 0.0 # degrees
+psi_deg_ref = 0.0
+
+coeff_linear = 0.5
+coeff_angular = 1.2
+
+command = Twist()
+tab = []
+
+# Node init
+rospy.init_node('cmd', anonymous=True)
+
+
+# Publisher declaration on the topic of command
+pubCommand = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+commandRate = rospy.Rate(40) 
+
+# Measurements reading
+def readZ(data):
+	global z
+	global psi_deg
+	# Data reading Z axis
+	z = data.altd / 1000.0   
+	# Data reading yaw angle (deg)
+	psi_deg = data.rotZ
+
+rospy.Subscriber("/ardrone/navdata", Navdata, readZ)
+
+# Main: looping execution
+if __name__ == '__main__':
+	global z
+	global psi_deg
+	
+	dpla = 0
+	current_z = z_ref_min
+	tab.append(0)
+	tab.append(0)
+	end = False
+	up = True
+    
+	command.angular.z = coeff_angular*(psi_deg_ref - psi_deg)
+	command.linear.z = coeff_linear*(current_z - z)
+	pubCommand.publish(command)
+	commandRate.sleep()
+	while(math.fabs(psi_deg - psi_deg_ref) > 1 or math.fabs(z - current_z) > 0.05):
+         command.linear.z = coeff_linear*(current_z - z)
+         command.angular.z = coeff_angular*(psi_deg_ref - psi_deg)
+         pubCommand.publish(command)
+         commandRate.sleep()
+	
+	print 'INIT OK'
+	
+	tab[0] = psi_deg
+	
+	while not rospy.is_shutdown():
+         if (dpla > 360):
+             print 'COMMENCE A MONTER / DESCENDRE'
+             if end:
+                 command.angular.z = 0.0
+                 command.linear.z = 0.0
+                 pubCommand.publish(command)
+                 commandRate.sleep()
+                 sys.exit()
+             
+             command.angular.z = 0.0
+             if(current_z == z_ref_max):
+                 up = False
+             if(up):
+                 current_z += 0.3
+             else:
+                 current_z -= 0.3
+             print "up : " + str(up)
+             
+             while math.fabs(z - current_z) > 0.05:
+                 command.linear.z = coeff_linear*(current_z - z)
+                 pubCommand.publish(command)
+                 commandRate.sleep()
+                 print 'monte / descend : ' + str(z)
+             
+             dpla = 0
+             command.linear.z = 0.0
+             if math.fabs(current_z - z_ref_min) < 1e-3:
+                 end = True
+         
+         tab[1] = psi_deg
+         if math.fabs(tab[1] - tab[0]) < 350:
+             dpla += tab[1]-tab[0]
+         else:
+             dpla += (180-math.fabs(tab[0])) + (180-math.fabs(tab[1]))
+         rospy.loginfo("z (m) psi (deg) = %f %f %f %f %f", z, psi_deg_ref, tab[0], tab[1], dpla)
+         tab[0] = tab[1]
+         command.angular.z = coeff_angular*(psi_deg_ref - psi_deg)
+         
+         if math.fabs(psi_deg - psi_deg_ref) < 15:
+             psi_deg_ref += 45
+         
+    
+         pubCommand.publish(command)
+         commandRate.sleep()
+
+
+
