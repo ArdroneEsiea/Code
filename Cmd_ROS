@@ -1,0 +1,161 @@
+Filesystem Management Tools
+
+rospack A tool for inspecting packages.
+rospack profile Fixes path and pluginlib problems.
+roscd Change directory to a package.
+rospd/rosd Pushd equivalent for ROS.
+rosls Lists package or stack information.
+rosed Open requested ROS file in a text editor.
+roscp Copy a file from one place to another.
+rosdep Installs package system dependencies.
+roswtf Displays a errors and warnings about a
+running ROS system or launch file.
+catkin create pkg Creates a new ROS stack.
+wstool Manage many repos in workspace.
+catkin make Builds a ROS catkin workspace.
+rqt dep Displays package structure and dependencies.
+
+
+Start-up and Process Launch Tools
+
+roscore
+The basis nodes and programs for ROS-based systems. A
+roscore must be running for ROS nodes to communicate.
+Usage:
+$ roscore
+
+rosrun
+Runs a ROS package’s executable with minimal typing.
+Usage:
+$ rosrun package name executable name
+Example (runs turtlesim):
+$ rosrun turtlesim turtlesim node
+
+roslaunch
+Starts a roscore (if needed), local nodes, remote nodes via
+SSH, and sets parameter server parameters.
+Examples:
+Launch a file in a package:
+$ roslaunch package name file name.launch
+Launch on a different port:
+$ roslaunch -p 1234 package name file name.launch
+Launch on the local nodes:
+$ roslaunch --local package name file name.launch
+
+
+Logging Tools
+
+rosbag
+A set of tools for recording and playing back of ROS topics.
+Commands:
+rosbag record Record a bag file with specified topics.
+rosbag play Play content of one or more bag files.
+rosbag compress Compress one or more bag files.
+rosbag decompress Decompress one or more bag files.
+rosbag filter Filter the contents of the bag.
+Examples:
+Record select topics:
+$ rosbag record topic1 topic2
+Replay all messages without waiting:
+$ rosbag play -a demo log.bag
+Replay several bag files at once:
+$ rosbag play demo1.bag demo2.bag 
+
+
+Introspection and Command Tools
+
+rosmsg/rossrv
+Displays Message/Service (msg/srv) data structure definitions.
+Commands:
+rosmsg show Display the fields in the msg/srv.
+rosmsg list Display names of all msg/srv.
+rosmsg md5 Display the msg/srv md5 sum.
+rosmsg package List all the msg/srv in a package.
+rosmsg packages List all packages containing the msg/srv.
+Examples:
+Display the Pose msg:
+$ rosmsg show Pose
+List the messages in the nav msgs package:
+$ rosmsg package nav msgs
+List the packages using sensor msgs/CameraInfo:
+$ rosmsg packages sensor msgs/CameraInfo
+
+
+rosnode
+Displays debugging information about ROS nodes, including
+publications, subscriptions and connections.
+Commands:
+rosnode ping Test connectivity to node.
+rosnode list List active nodes.
+rosnode info Print information about a node.
+rosnode machine List nodes running on a machine.
+rosnode kill Kill a running node.
+Examples:
+Kill all nodes:
+$ rosnode kill -a
+List nodes on a machine:
+$ rosnode machine aqy.local
+Ping all nodes:
+$ rosnode ping --all
+
+
+rostopic
+A tool for displaying information about ROS topics, including
+publishers, subscribers, publishing rate, and messages.
+Commands:
+rostopic bw Display bandwidth used by topic.
+rostopic echo Print messages to screen.
+rostopic find Find topics by type.
+rostopic hz Display publishing rate of topic.
+rostopic info Print information about an active topic.
+rostopic list List all published topics.
+rostopic pub Publish data to topic.
+rostopic type Print topic type.
+Examples:
+Publish hello at 10 Hz:
+$ rostopic pub -r 10 /topic name std msgs/String hello
+Clear the screen after each message is published:
+$ rostopic echo -c /topic name
+Display messages that match a given Python expression:
+$ rostopic echo --filter "m.data==’foo’" /topic name
+Pipe the output of rostopic to rosmsg to view the msg type:
+$ rostopic type /topic name | rosmsg show
+
+
+rosparam
+A tool for getting and setting ROS parameters on the
+parameter server using YAML-encoded files.
+Commands:
+rosparam set Set a parameter.
+rosparam get Get a parameter.
+rosparam load Load parameters from a file.
+rosparam dump Dump parameters to a file.
+rosparam delete Delete a parameter.
+rosparam list List parameter names.
+Examples:
+List all the parameters in a namespace:
+$ rosparam list /namespace
+Setting a list with one as a string, integer, and float:
+$ rosparam set /foo "[’1’, 1, 1.0]"
+Dump only the parameters in a specific namespace to file:
+$ rosparam dump dump.yaml /namespace
+
+
+rosservice
+A tool for listing and querying ROS services.
+Commands:
+rosservice list Print information about active services.
+rosservice node Print name of node providing a service.
+rosservice call Call the service with the given args.
+rosservice args List the arguments of a service.
+rosservice type Print the service type.
+rosservice uri Print the service ROSRPC uri.
+rosservice find Find services by service type.
+Examples:
+Call a service from the command-line:
+$ rosservice call /add two ints 1 2
+Pipe the output of rosservice to rossrv to view the srv type:
+$ rosservice type add two ints | rossrv show
+Display all services of a particular type:
+$ rosservice find rospy tutorials/AddTwoInts
+
