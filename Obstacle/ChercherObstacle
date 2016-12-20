@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+
+import roslib
+import sys
+import rospy
+import numpy as np
+import cv2
+import cv
+import math
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+
+from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+from geometry_msgs.msg import PoseArray # for receiving tag feedback
+from nav_msgs.msg import Odometry # for receiving odometry feedback
+
+
+nb_img_max = 2
+
+begin = True
+images = []
+
+
+def fonction(data):
+    global images
+    global image_prev
+    global image_curr
+    global begin
+    
+    bridge = CvBridge()
+    try:
+        cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
+    except CvBridgeError as e:
+        print(e)
+    
+    if(len(images) == nb_img_max):
+        for i in range(0, nb_img_max-1):
+            images[i] = images[i+1]
+    images.append(cv_image)
+    
+    if(begin == False):
+        cv2.imshow("Image prev", images[len(images)-1])
+        cv2.imshow("Image curr", images[len(images)-2])
+        stereo = cv2.StereoBM(cv2.STEREO_BM_BASIC_PRESET, ndisparities=16, SADWindowSize=15)
+        print type(images[len(images)-2])
+        imgL = cv.fromarray(images[len(images)-1])
+        imgR = cv.fromarray(images[len(images)-2])
+        imgL2 = cv.CreateMat(256, 256, 0)
+        imgR2 = cv.CreateMat(256, 256, 0)
+        cv.CvtColor(imgL, imgL2, CV_8UC1)
+        cv.CvtColor(imgR, imgR2, CV_8UC1)
+        disparity = stereo.compute(images[len(images)-1], images[len(images)-2])
+        cv2.imshow("Disparity", disparity)
+        cv2.waitKey(3)
+    else:
+        begin = False
+
+
+def main(args):
+    image_sub = rospy.Subscriber('/ardrone/front/image_raw', Image, fonction)
+    rospy.init_node('image_converter', anonymous=True)
+    
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print("Shutting down")
+    cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    main(sys.argv)
+
