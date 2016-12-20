@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+
+# variables globales
+altitudeRef = 1500 # altitude ref en mm
+commande = Twist()
+
+# initialisation du noeud
+rospy.init_node('commande_z', anonymous=True)
+
+# declaration d'un publisher sur le topic de commande
+pubCommande = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+
+# fonction de lecture de la mesure et d'envoi de la commande
+def calculCommandeZ(data):
+	# lecture donnee altitude
+	altitude = data.altd    
+	# affichage sur la console (pour info)
+	rospy.loginfo(rospy.get_caller_id() + "altitude (mm) = %f", data.altd)
+
+	# calcul de la commande
+	# --- a completer ----
+	commande.linear.z = (altitudeRef - altitude) * 0.001
+	# --------------------
+
+
+	# envoi de la commande
+	pubCommande.publish(commande)	
+
+
+# declaration d'un subscriber : appelle claculCommandeZ a chq arrivee d'une donnee sur le topic Navdata
+rospy.Subscriber("/ardrone/navdata", Navdata, calculCommandeZ)
+
+
+
+# fonction main executee en boucle 
+if __name__ == '__main__':
+
+	rospy.spin()
+
