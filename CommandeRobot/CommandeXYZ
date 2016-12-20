@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+from nav_msgs.msg import Odometry # for receiving odometry feedback
+
+# Global variables 
+x_ref = 0.0 # m
+y_ref = 0.0 # m
+z_ref = 1.2 # mm
+psi_deg_ref = 0.0
+command = Twist()
+x = 0.0
+y = 0.0
+z = 0.0
+psi_deg = -140.0
+
+
+# Node init
+rospy.init_node('cmd', anonymous=True)
+
+
+# Publisher declaration on the topic of command
+pubCommand = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+commandRate = rospy.Rate(40) 
+
+# Measurements reading
+
+def readXY(data):
+	global x
+	global y
+	# Data reading X axis
+	x = data.pose.pose.position.x 
+	# Data reading Y axis
+	y = data.pose.pose.position.y     
+
+
+	
+	
+def readZ(data):
+	global z	
+	global psi_deg
+	# Data reading Z axis
+	z = data.altd / 1000.0   
+	# Data reading yaw angle (deg)
+	psi_deg = data.rotZ
+    
+	
+
+# Subscriber declaration 
+rospy.Subscriber("/ardrone/odometry", Odometry, readXY)
+rospy.Subscriber("/ardrone/navdata", Navdata, readZ)
+
+
+# Main: looping execution
+if __name__ == '__main__':
+	global x
+	global y	
+	global z
+	global psi_deg
+
+	while not rospy.is_shutdown():
+
+		rospy.loginfo(" x y z (m) psi (deg) = %f %f %f %f", x, y, z, psi_deg)
+#		rospy.loginfo(" y (m) = %f", y)
+#		rospy.loginfo(" z (m) = %f", z)
+
+		command.linear.x = 0.5*(x_ref - x)
+		command.linear.y = 0.5*(y_ref - y)
+		command.linear.z = 0.5*(z_ref - z)
+
+		#command.angular.z = 1.2*(psi_deg_ref - psi_deg)
+	
+		# Command sending
+		pubCommand.publish(command)
+		commandRate.sleep()
+
+
+
+
