@@ -1,0 +1,27 @@
+Lancement du simulateur : 
+dans deux consoles de commandes
+
+
+roslaunch cvg_sim_gazebo home.launch
+roslaunch ardrone_tutorials keyboard_controller_only.launch
+
+
+Pilotage du drone
+roslaunch ardrone_tutorials keyboard_controller_with_tag.launch
+
+
+Creation du package :
+cd ~\catkin\src
+catkin_create_pkg projet_drone std_msgs geometry_msgs sensor_msgs rospy roscpp
+
+Création du répertoire pour les scripts Python :
+cd ~\catkin_ws\src\projet_drone
+mkdir scripts
+
+(n’oubliez pas pour chaque fichier Python ajouté dans ce répertoire par la suite de changer les
+droits pour permettre l’exécution : chmod +x monFichierPython.py) :
+
+Compilation :
+cd ~\catkin_ws
+source devel/setup.bash
+catkin build
