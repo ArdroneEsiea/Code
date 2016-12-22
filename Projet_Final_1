@@ -1,0 +1,89 @@
+import rospy
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist
+from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+#import time
+
+
+#Global Variable
+
+altitude = 0.0
+altitudeRef_Z = 0.80 # altitude ref en m
+altitudeFinal_Z = 1.4
+
+k = 0.5
+boolean = False
+seuil = 0.1
+
+distance_Y = 1.0 #Distance entre drone et personne
+flagtag = False
+
+psi_degre = 0.0 # degrees
+psi_degre_ref = 0.0
+
+coeff_linear = 1.5
+coeff_angular = 0.5
+
+commande = Twist()
+
+# initialisation du noeud
+rospy.init_node('commande_z', anonymous=True)
+
+# declaration d'un publisher sur le topic de commande
+pubCommande = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+
+# tag reading
+def readTag(data):
+    global flagtag
+    try:
+        global distance_Y
+        flagtag = True
+        distance_Y = data.poses[0].position.y
+    
+    except:
+        flagtag = False
+		
+# Measurements reading
+def readZ(data):
+	global altitude
+	global psi_degre
+	# Data reading Z axis
+	altitude = data.altd / 1000.0   
+	# Data reading yaw angle (deg)
+	psi_degre = data.rotZ
+	
+#Début 
+def getAltitude(data):
+
+	global altitudeRef_Z ,boolean	
+		# lecture donnee altitude (en m)
+		altitude = data.altd  / 1000.0
+		# affichage sur la console (pour info)
+		rospy.loginfo(rospy.get_caller_id() + "altitude (m) = %f", data.altd)
+
+	
+	command.linear.z = coeff_linear*(altitudeRef_Z - altitude)
+	command.angular.z = coeff_angular*(psi_degre_ref - psi_degre)
+	time.sleep(1) 
+	
+	while(abs(altitude - altitudeRef_Z) > seuil or abs(psi_degre - psi_degre_ref) > 1:
+         command.linear.z = coeff_linear*(altitudeRef_Z - altitude)
+		 command.angular.z = coeff_angular*(psi_degre_ref - psi_degre)
+			
+		 rospy.loginfo("ok")
+	
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	pubCommand.publish(command)
+	
+	
+# declaration d'un subscriber : appelle getAltitude a chq arrivee d'une donnee sur le topic Navdata
+rospy.Subscriber("/ardrone/navdata", Navdata, getAltitude)
