@@ -24,6 +24,8 @@ psi_degre_ref = 0.0
 coeff_linear = 1.5
 coeff_angular = 0.5
 
+init_angle = 0.0
+
 commande = Twist()
 
 # initialisation du noeud
@@ -73,13 +75,30 @@ def getAltitude(data):
 			
 		 rospy.loginfo("ok")
 	
+	while not rospy.is_shutdown():
+	
+		if init_angle = 1000:
+			init_angle = psi_degre
+		
+		if (values > init_angle + 360): #tourne sur lui meme pour trouver le tag
+			if (altitudeRef_Z == altitudeFinal_Z)
+				up = False #le robot check pour monter ou descendre
+			if(up):
+				altitudeRef_Z += 0.3
+			else:
+				altitudeRef_Z -= 0.3
+			
+			
 		
 	
 	
 	
 	
 	
-	
+		if flagtag == True:
+				command.linear.z = coeff_linear*(distance_y)
+		elif flagtag == False:
+				command.linear.z = 0.0
 	
 	
 	pubCommand.publish(command)
