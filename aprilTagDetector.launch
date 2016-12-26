@@ -1,3 +1,6 @@
+A mettre dans le dossier launch
+
+
 <launch>
  <node pkg="apriltags_ros" type="apriltag_detector_node" name="apriltag_detector"
 output="screen">
