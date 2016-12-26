@@ -1,0 +1,16 @@
+Il faut calibrer la campéra frontal pour quelle puisse reconnaitre des tags directement --> voir TP
+
+On place le drone dans la salle
+il démarre
+il s'eleve au 1er palier (80 centimetres)
+arrivé au 1er palier il tourne sur lui même de 360° pour cartographie la salle et reperer des tags
+Il s'éleve encore pour aller au 2nd palier (1 mètre 10)
+arrivé au 2nd palier il tourne sur lui même de 360° pour cartographie la salle et reperer des tags
+Il s'éleve encore pour aller au 3eme palier (1 metre 40) 
+arrivé au 3eme palier il tourne sur lui même de 360° pour cartographie la salle et reperer des tags
+
+On aura ainsi une carte avec toutes les positions des tags
+
+A ce moment là, il a fait une carte de la salle avec les différents obstacles et profondeur de champs --> voir TP
+On a enregistré précedement les coordonnées des différents tags dans la salle
+Il se dirige ensuite vers les tags en fonction de l'ordre donnée
