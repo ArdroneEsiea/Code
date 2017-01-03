@@ -8,6 +8,13 @@ output="screen">
     <remap from="camera_info" to="/ardrone/front/camera_info" />
     <rosparam param="tag_descriptions">[
         {id: 0, size: 0.163513}                       <- cette ligne est à modifier (*)
+        {id: 1, size: 0.163513}
+        {id: 2, size: 0.163513}
+        {id: 3, size: 0.163513}
+        {id: 4, size: 0.163513}
+        {id: 5, size: 0.163513}                                                 
+        {id: 6, size: 0.163513}
+        {id: 9, size: 0.163513}
     ]</rosparam>
  </node>
 </launch>
