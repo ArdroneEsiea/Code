@@ -2,6 +2,7 @@ import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
+from apriltags_ros.msg import AprilTagDetectionArray
 #import time
 
 
@@ -15,7 +16,7 @@ k = 0.5
 boolean = False
 seuil = 0.1
 
-distance_Y = 1.0 #Distance entre drone et personne
+distance_Y = 1.0 #Distance entre drone et personne en metre
 flagtag = False
 
 psi_degre = 0.0 # degrees
@@ -69,40 +70,59 @@ def getAltitude(data):
 	command.angular.z = coeff_angular*(psi_degre_ref - psi_degre)
 	time.sleep(1) 
 	
-	while(abs(altitude - altitudeRef_Z) > seuil or abs(psi_degre - psi_degre_ref) > 1:
-         command.linear.z = coeff_linear*(altitudeRef_Z - altitude)
-		 command.angular.z = coeff_angular*(psi_degre_ref - psi_degre)
+	commande.linear.z = 1.5*(altitudeRef - altitude)
+	# ****************************************
+
+	if abs(altitude - altitudeRef) < seuil :
+		#time.sleep(2)		
+		if altitudeRef_Z  <  altitudeFinal_Z :
+			altitudeRef_Z = altitudeRef_Z + 0.300
+		if altitudeRef_Z > altitudeFinal_Z :
+			altitudeRef_Z = altitudeRef_Z - 0.100
 			
-		 rospy.loginfo("ok")
 	
-	while not rospy.is_shutdown():
-	
-		if init_angle = 1000:
-			init_angle = psi_degre
-		
-		if (values > init_angle + 360): #tourne sur lui meme pour trouver le tag
-			if (altitudeRef_Z == altitudeFinal_Z)
-				up = False #le robot check pour monter ou descendre
-			if(up):
-				altitudeRef_Z += 0.3
-			else:
-				altitudeRef_Z -= 0.3
+	# while(abs(altitude - altitudeRef_Z) > seuil or abs(psi_degre - psi_degre_ref) > 1:
+         # command.linear.z = coeff_linear*(altitudeRef_Z - altitude)
+		 # command.angular.z = coeff_angular*(psi_degre_ref - psi_degre)
+		 # pubCommand.publish(command)
 			
+		 # rospy.loginfo("ok")
+	
+	# while not rospy.is_shutdown():
+	
 			
-		
-	
-	
-	
-	
-	
-		if flagtag == True:
-				command.linear.z = coeff_linear*(distance_y)
-		elif flagtag == False:
-				command.linear.z = 0.0
+		# if flagtag == True:
+				# command.linear.z = coeff_linear*(distance_y)
+		# elif flagtag == False:
+				# command.linear.z = 0.0
 	
 	
 	pubCommand.publish(command)
 	
-	
+
 # declaration d'un subscriber : appelle getAltitude a chq arrivee d'une donnee sur le topic Navdata
 rospy.Subscriber("/ardrone/navdata", Navdata, getAltitude)
+
+
+def getMsg(data):
+
+if data.detections:
+	for i in range(len(data.detections)):
+		rospy.loginfo("tag repéré: %d", data.detection[i].id)
+		if data.detections[i].id == 1 or data.detections[i].id == 2 or data.detections[i].id == 3 or data.detections[i].id == 4
+		elif data.detections[i].id == 5 or data.detections[i].id == 6 or data.detections[i].id == 7
+			if fabs(data.detections[i].pose.pose.position.x) < 0.2
+				commande.angular.z = ((commande.angular.z*3)) + data.detections[i].pose.pose.orientation.z)/5)) /4
+			else
+				commande.linear.x = ((commande.linear.x*3)+ (data.detections[i].pose.pose.position.z - 1.0)) /4
+				commande.linear.y = ((commande.linear.y*3)+ (-data.detections[i].pose.pose.position.x))/4
+				commande.linear.z = ((commande.linear.z*3)+ (-data.detections[i].pose.pose.position.y))/4
+
+
+	pubCommand.publish(command)
+
+
+
+
+# declaration d'un subscriber : appelle getAltitude a chq arrivee d'une donnee sur le topic Navdata
+rospy.Subscriber("/tag_detections", AprilTagDetectionArray, getMsg)
