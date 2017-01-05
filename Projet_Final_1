@@ -104,7 +104,7 @@ def getAltitude(data):
 rospy.Subscriber("/ardrone/navdata", Navdata, getAltitude)
 
 
-def getMsg(data):
+def getTag(data):
 
 if data.detections:
 	for i in range(len(data.detections)):
@@ -125,4 +125,4 @@ if data.detections:
 
 
 # declaration d'un subscriber : appelle getAltitude a chq arrivee d'une donnee sur le topic Navdata
-rospy.Subscriber("/tag_detections", AprilTagDetectionArray, getMsg)
+rospy.Subscriber("/tag_detections", AprilTagDetectionArray, getTag)
